@@ -30,8 +30,6 @@ column_concat <- function(df,col1,col2,colname, sep = ",") {
   col <- enquo(colname)
   df <- df %>% unite(!!col,!!c1,!!c2,sep = sep,remove = FALSE)
   df[,1] <- str_replace_all(df[,1],c("NA,NA" = NA, "NA," = "", ",NA" = ""))
-  # df[,1] <- gsub(x = df[,1], pattern = "NA,NA", replacement = NA)
-  # df[,1] <- gsub(x = df[,1], pattern = "NA,",replacement = "")
-  # df[,1] <- gsub(x = df[,1], pattern = ",NA",replacement = "")
+  
   return(df)
 }
