@@ -16,16 +16,16 @@ the combined columns.
 
   - df is the dataframe
   - … the column names of the columns that will be combined.
-  - colname is the name of the output column
+  - col is the name of the output column
   - sep is the character that will separate the combined column strings
 
 ### Returns
 
-A dataframe with the first column, “col”, being a combination of the
-column … separated by “sep” (default “,”). Note: If the values in each
-column for a row are NA, the output for that row in ‘col’ will be NA. If
-one or more, but not all, values of the combined columns in a row are
-NA, all NA’s will be remove in ‘col’ for that row.
+A dataframe with the first column, ‘col’, being a combination of the
+columns ‘…’ separated by “sep” (default “,”). Note: If the values in
+each column for a row are NA, the output for that row in ‘col’ will be
+NA. If one or more, but not all, values of the combined columns in a row
+are NA, all NA’s will be remove in ‘col’ for that row.
 
 ### Required Packages
 
@@ -42,13 +42,12 @@ library(stringr)
 
 paste_columns <- function(df,...,col, sep = ",") {
   cols <- quos(...)
-  col <- enquo(colname)
+  col <- enquo(col)
   df <- df %>% unite(!!col,!!!cols,sep = sep,remove = FALSE)
   n <- length(cols) 
   na_string <- paste(replicate(n,"NA"), collapse = ",")
   df[,1] <- str_replace_all(df[,1],c(na_string = NA, "NA," = "", ",NA" = ""))
-  
-  return(df)
+  replace(df,df == "NA",NA)
 }
 ```
 
@@ -69,15 +68,14 @@ print(df)
     ## 4     <NA>  <NA> <NA>
 
 ``` r
-df_new <- paste_columns(df,x,y,z,col = xyz)
-print(df_new)
+paste_columns(df,x,y,z,col = xyz)
 ```
 
-    ##   function (expr) ...        x     y    z
-    ## 1    U1,U2,U3,V4,V5,A U1,U2,U3 V4,V5    A
-    ## 2               U1,U2    U1,U2  <NA> <NA>
-    ## 3                V8,C     <NA>    V8    C
-    ## 4                  NA     <NA>  <NA> <NA>
+    ##                xyz        x     y    z
+    ## 1 U1,U2,U3,V4,V5,A U1,U2,U3 V4,V5    A
+    ## 2            U1,U2    U1,U2  <NA> <NA>
+    ## 3             V8,C     <NA>    V8    C
+    ## 4             <NA>     <NA>  <NA> <NA>
 
 ### setexclusive
 

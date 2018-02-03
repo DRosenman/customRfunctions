@@ -18,11 +18,11 @@ What follows is a demonstration of some R functions that I made that (I think) a
 ### Parameters
 - df is the dataframe
 -  ... the column names of the columns that will be combined.
-- colname is the name of the output column
+- col is the name of the output column
 - sep is the character that will separate the combined column strings
 
 ### Returns
-A dataframe with the first column, "col", being a combination of the column ... separated by "sep" (default ","). Note: If the values in each column for a row are NA, the output for that row in 'col' will be NA. If one or more, but not all, values of the combined columns in a row are NA, all NA's will be remove in 'col' for that row.   
+A dataframe with the first column, 'col', being a combination of the columns '...' separated by "sep" (default ","). Note: If the values in each column for a row are NA, the output for that row in 'col' will be NA. If one or more, but not all, values of the combined columns in a row are NA, all NA's will be remove in 'col' for that row.   
 
 ### Required Packages
 - **tidyr**: for the *unite* function 
@@ -36,13 +36,12 @@ library(stringr)
 
 paste_columns <- function(df,...,col, sep = ",") {
   cols <- quos(...)
-  col <- enquo(colname)
+  col <- enquo(col)
   df <- df %>% unite(!!col,!!!cols,sep = sep,remove = FALSE)
   n <- length(cols) 
   na_string <- paste(replicate(n,"NA"), collapse = ",")
   df[,1] <- str_replace_all(df[,1],c(na_string = NA, "NA," = "", ",NA" = ""))
-  
-  return(df)
+  replace(df,df == "NA",NA)
 }
 ```
 ### Example
@@ -53,10 +52,11 @@ df <- data.frame(x = c("U1,U2,U3","U1,U2",NA,NA),
                  z = c('A',NA,'C',NA),
                  stringsAsFactors = FALSE)
 print(df)
-df_new <- paste_columns(df,x,y,z,col = xyz)
-print(df_new)
 ```
 
+```{r}
+paste_columns(df,x,y,z,col = xyz)
+```
 
 ### setexclusive
 dplyr contains there set operations functions. All three work on complete rows by comparing the values of each variable a given row. The two input dataframes need to have the same variables. *intersect* returns equivalent rows from the two dataframes, *union* returns unique rows in the two dataframes, and *setdiff* returns rows that are in the first dataframe but not the second. **setexclusive** returns rows that are in either the first dataframe or the second dataframe, but not both dataframes.
