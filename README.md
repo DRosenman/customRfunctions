@@ -8,19 +8,18 @@ What follows is a demonstration of some R functions that I made that (I think) a
 Combining Columns
 -----------------
 
-The following function, **column\_concat** let's you combine two columns of srins into a single column. It returns the original columns from the dataframe plus the combined column.
+The following function, **column\_concat** lets you combines multiple columns of strings into a single column. It returns the original columns from the dataframe plus the combined column.
 
 ### parameters
 
 -   df is the dataframe
--   col1 is the name of the first column to be combined
--   col2 is the name of the second column to be combined
+-   ... the column names of the columns that will be combined.
 -   colname is the name of the output column
 -   sep is the character that will separate the combined column strings
 
 ### returns
 
-A dataframe with the first column, 'colname', being a combination of two columns seperated by "sep". If the values in each column for a row are NA, the output for that row in 'colname' will be NA. If one but not both of the values of the combined columns in a row is NA, NA will be removed
+A dataframe with the first column, "col", being a combination of the column ... separated by "sep" (default ","). Note: If the values in each column for a row are NA, the output for that row in 'col' will be NA. If one or more, but not all, values of the combined columns in a row are NA, all NA's will be remove in 'col' for that row.
 
 ### required packages
 
@@ -33,12 +32,14 @@ library(tidyr)
 library(rlang)
 library(stringr)
 
-column_concat <- function(df,col1,col2,colname, sep = ",") {
-  c1 <- enquo(col1)
-  c2 <- enquo(col2)
+column_concat <- function(df,...,col, sep = ",") {
+  cols <- quos(...)
   col <- enquo(colname)
-  df <- df %>% tidyr::unite(!!col,!!c1,!!c2,sep = sep,remove = FALSE)
-  df[,1] <- str_replace_all(df[,1],c("NA,NA" = NA, "NA," = "", ",NA" = ""))
+  df <- df %>% unite(!!col,!!!cols,sep = sep,remove = FALSE)
+  n <- length(cols) 
+  na_string <- paste(replicate(n,"NA"), collapse = ",")
+  df[,1] <- str_replace_all(df[,1],c(na_string = NA, "NA," = "", ",NA" = ""))
+  
   return(df)
 }
 ```
@@ -46,26 +47,26 @@ column_concat <- function(df,col1,col2,colname, sep = ",") {
 **Example**:
 
 ``` r
-df <- data.frame(x = c("U1,U2,U3","U1,U2","NA","NA"),
-                 y = c("V4,V5","NA","V8","NA"), 
-                 z = 9,
+df <- data.frame(x = c("U1,U2,U3","U1,U2",NA,NA),
+                 y = c("V4,V5",NA,"V8",NA), 
+                 z = c('A',NA,'C',NA),
                  stringsAsFactors = FALSE)
 print(df)
 ```
 
-    ##          x     y z
-    ## 1 U1,U2,U3 V4,V5 9
-    ## 2    U1,U2    NA 9
-    ## 3       NA    V8 9
-    ## 4       NA    NA 9
+    ##          x     y    z
+    ## 1 U1,U2,U3 V4,V5    A
+    ## 2    U1,U2  <NA> <NA>
+    ## 3     <NA>    V8    C
+    ## 4     <NA>  <NA> <NA>
 
 ``` r
-df_new <- column_concat(df,x,y,xy)
+df_new <- column_concat(df,x,y,z,col = xyz)
 print(df_new)
 ```
 
-    ##               xy        x     y z
-    ## 1 U1,U2,U3,V4,V5 U1,U2,U3 V4,V5 9
-    ## 2          U1,U2    U1,U2    NA 9
-    ## 3             V8       NA    V8 9
-    ## 4           <NA>       NA    NA 9
+    ##   function (expr) ...        x     y    z
+    ## 1    U1,U2,U3,V4,V5,A U1,U2,U3 V4,V5    A
+    ## 2               U1,U2    U1,U2  <NA> <NA>
+    ## 3                V8,C     <NA>    V8    C
+    ## 4                  NA     <NA>  <NA> <NA>
